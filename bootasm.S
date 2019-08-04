@@ -7,17 +7,28 @@
 # memory at physical address 0x7c00 and starts executing in real mode
 # with %cs=0 %ip=7c00.
 
+# 在MAKEFILE中指定起始位置为0x7c00即%ip=7c00
+# 使实模式下cs:ip即为第一条指令的位置
 .code16                       # Assemble for 16-bit mode
 .globl start
 start:
+# 关闭中断
   cli                         # BIOS enabled interrupts; disable
 
+# 将数据段寄存器，附加寄存器和栈寄存器都赋值为0
   # Zero data segment registers DS, ES, and SS.
   xorw    %ax,%ax             # Set %ax to zero
   movw    %ax,%ds             # -> Data Segment
   movw    %ax,%es             # -> Extra Segment
   movw    %ax,%ss             # -> Stack Segment
 
+# 开启A20地址线，使内存地址突破1mb
+# 开启方式有三种：
+# 1.键盘中断
+# 2.BIOS中断函数
+# 3.直接操作硬件IO端口
+# 1.键盘中断：
+# 
   # Physical address line A20 is tied to zero so that the first PCs 
   # with 2 MB would run software that assumed 1 MB.  Undo that.
 seta20.1:
