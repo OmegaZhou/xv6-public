@@ -27,6 +27,8 @@
 .p2align 2
 .text
 .globl multiboot_header
+
+# Multiboot规范规定的头格式 
 multiboot_header:
   #define magic 0x1badb002
   #define flags 0
@@ -40,14 +42,17 @@ multiboot_header:
 .globl _start
 _start = V2P_WO(entry)
 
+# 内核程序的入口地址
 # Entering xv6 on boot processor, with paging off.
 .globl entry
 entry:
+  # 扩展页大小，使一页分配4mb
   # Turn on page size extension for 4Mbyte pages
   movl    %cr4, %eax
   orl     $(CR4_PSE), %eax
   movl    %eax, %cr4
   # Set page directory
+  
   movl    $(V2P_WO(entrypgdir)), %eax
   movl    %eax, %cr3
   # Turn on paging.
