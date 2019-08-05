@@ -7,7 +7,7 @@
 # memory at physical address 0x7c00 and starts executing in real mode
 # with %cs=0 %ip=7c00.
 
-# 在MAKEFILE中指定起始位置为0x7c00即%ip=7c00
+# 在MAKEFILE中指定起始位置为0x7c00，另偏移量计算时加上0x7c00
 # 使实模式下cs:ip即为第一条指令的位置
 .code16                       # Assemble for 16-bit mode
 .globl start
