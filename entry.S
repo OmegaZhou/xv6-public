@@ -52,17 +52,23 @@ entry:
   orl     $(CR4_PSE), %eax
   movl    %eax, %cr4
   # Set page directory
-  
+  # CR0寄存器，保存页表目录的物理地址
+  # 页目录总是4K对齐的，故该寄存器低12位不起作用
+  # 由于编译时的内核程序地址使用虚拟地址
+  # 故在开启硬件转换内存地址前由程序完成到物理地址的转换
   movl    $(V2P_WO(entrypgdir)), %eax
   movl    %eax, %cr3
   # Turn on paging.
+  # 开启分页机制
   movl    %cr0, %eax
   orl     $(CR0_PG|CR0_WP), %eax
   movl    %eax, %cr0
 
   # Set up the stack pointer.
+  # 分配KSTACKSIZE大小的栈空间
   movl $(stack + KSTACKSIZE), %esp
 
+  # 跳转至main.c中的main函数
   # Jump to main(), and switch to executing at
   # high addresses. The indirect call is needed because
   # the assembler produces a PC-relative instruction
