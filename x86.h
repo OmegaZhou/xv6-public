@@ -123,6 +123,11 @@ xchg(volatile uint *addr, uint newval)
   uint result;
 
   // The + in "+m" denotes a read-modify-write operand.
+  // lock操作，保证xchgl在多核情况下是原子操作
+  // 内联汇编输出参数
+  // +m:内存操作数，可读写
+  // =a, 寄存器操作数，将eax的值读入
+  // 1:输入操作数，该操作数使用的寄存器与%1参数使用的寄存器一致
   asm volatile("lock; xchgl %0, %1" :
                "+m" (*addr), "=a" (result) :
                "1" (newval) :
