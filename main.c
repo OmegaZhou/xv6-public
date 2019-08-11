@@ -17,7 +17,13 @@ extern char end[]; // first address after kernel loaded from ELF file
 int
 main(void)
 {
+  // 此时单位页表长度仍为4mb
+  // 故分配内核后4mb内存供初始化使用
+  // 在此期间不需要使用自旋锁维护空闲内存链表
+  // end为内核尾后地址
+  // 由链接脚本保证end 4k对齐
   kinit1(end, P2V(4*1024*1024)); // phys page allocator
+  // 重新加载页表，并改用4kb为单位的页表
   kvmalloc();      // kernel page table
   mpinit();        // detect other processors
   lapicinit();     // interrupt controller

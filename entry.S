@@ -46,7 +46,7 @@ _start = V2P_WO(entry)
 # Entering xv6 on boot processor, with paging off.
 .globl entry
 entry:
-  # 扩展页大小，使一页分配4mb
+  # 允许扩展页大小，使一页分配4mb
   # Turn on page size extension for 4Mbyte pages
   movl    %cr4, %eax
   orl     $(CR4_PSE), %eax
