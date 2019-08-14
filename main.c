@@ -14,33 +14,34 @@ extern char end[]; // first address after kernel loaded from ELF file
 // Bootstrap processor starts running C code here.
 // Allocate a real stack and switch to it, first
 // doing some setup required for memory allocator to work.
-int
-main(void)
+int main(void)
 {
+  //内存初始化，设备初始化，子系统初始化
   // 此时单位页表长度仍为4mb
   // 故分配内核后4mb内存供初始化使用
   // 在此期间不需要使用自旋锁维护空闲内存链表
   // end为内核尾后地址
   // 由链接脚本保证end 4k对齐
-  kinit1(end, P2V(4*1024*1024)); // phys page allocator
+  kinit1(end, P2V(4*1024*1024)); // phys page allocator 分配物理页面
   // 重新加载页表，并改用4kb为单位的页表
-  kvmalloc();      // kernel page table
-  mpinit();        // detect other processors
-  lapicinit();     // interrupt controller
-  seginit();       // segment descriptors
-  picinit();       // disable pic
-  ioapicinit();    // another interrupt controller
-  consoleinit();   // console hardware
-  uartinit();      // serial port
-  pinit();         // process table
-  tvinit();        // trap vectors
-  binit();         // buffer cache
-  fileinit();      // file table
-  ideinit();       // disk 
-  startothers();   // start other processors
+  kvmalloc();      // kernel page table 内核页表分配
+  mpinit();        // detect other processors 检测其他处理器
+  lapicinit();     // interrupt controller initialization 中断控制器初始化
+  seginit();       // segment descriptors initialization 段描述符号初始化
+  picinit();       // disable pic initialization 停用图片
+  ioapicinit();    // another interrupt controller initialization 另一个中断控制器初始化
+  consoleinit();   // console hardware initialization 控制台硬件初始化
+  uartinit();      // serial port initialization 串行端口初始化
+  pinit();         // process table initialization 进程表初始化
+  tvinit();        // trap vectors initialization 中断向量初始化
+  binit();         // buffer cache initialization 缓冲区缓存初始化
+  fileinit();      // file table initialization 文件表初始化
+  ideinit();       // disk initialization 磁盘初始化
+  startothers();   // start other processors 启动其他处理器
   kinit2(P2V(4*1024*1024), P2V(PHYSTOP)); // must come after startothers()
-  userinit();      // first user process
-  mpmain();        // finish this processor's setup
+  //创建第一个进程（所有进程的父进程），完成CPU设置并调度进程
+  userinit();      //完成初始化后,调用userinit()创建第一个进程
+  mpmain();        // finish this processor's setup 完成此处理器的设置，开始调度进程
 }
 
 // Other CPUs jump here from entryother.S.
@@ -57,10 +58,11 @@ mpenter(void)
 static void
 mpmain(void)
 {
+  //完成CPU的配置，输出参数，通知其他处理机（若为多核处理机）本处理机初始化完毕
   cprintf("cpu%d: starting %d\n", cpuid(), cpuid());
   idtinit();       // load idt register
   xchg(&(mycpu()->started), 1); // tell startothers() we're up
-  scheduler();     // start running processes
+  scheduler();     // start running processes 调用schedluer()函数，开始无限循环寻找RUNNABLE状态的进程赋予其处理机资源
 }
 
 pde_t entrypgdir[];  // For entry.S
