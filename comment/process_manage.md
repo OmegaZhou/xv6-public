@@ -10,13 +10,13 @@
 
 ## 数据结构
 
-在proc.h头文件中定义了与进程管理有关的数据结构procstate、context和proc
+在proc.h头文件中定义了与进程管理有关的数据结构`procstate、context、proc`和`cpu`。
 
 
 
 ### 进程状态
 
-为准确描述进程的状态，在proc.h中定义了procstate(State of process)枚举类型，描述XV6中进程的六种状态：EMBRO, SLEEPING, RUNNABLE, RUNNING和ZOMBIE六种状态，分别为未使用态、初始态、等待态、就绪态、运行态和僵尸态。
+为准确描述进程的状态，在`proc.h`中定义了`procstate(State of process)`枚举类型，描述`XV6 OS`中进程的六种状态：`EMBRO, SLEEPING, RUNNABLE, RUNNING`和`ZOMBIE`六种状态，分别为未使用态、初始态、等待态、就绪态、运行态和僵尸态。
 
 ```c
 /*枚举类型procstate,分别代表一个进程的六种状态 未分配、创建态、阻塞态、就绪态、运行态、结束态*/
@@ -34,10 +34,9 @@ enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 
 
-![VX6进程状态转换示意图](img/transfer_prostate.jpg)
+![XV6进程状态转换示意图](img/transfer_prostate.jpg)
 
 <center><b>进程状态转换示意图</b></center>
-
 **状态转换情况**
 
 1. *UNUSED→EMBRYO*：执行一个程序，创建一个子进程。
@@ -46,7 +45,7 @@ enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 3. *RUNNING→ZOMBIE*：当一个进程到达了自然结束点，或是出现了无法克服的错误，或是被操作系统所终结，或是被其他有终止权的进程所终结。
 
-4. *RUNNBALE→RUNNING*：当一个进程通过`Scheduler() `CPU调度获得CPU时间片，则进程进入RUNNING态开始执行进程程序段。
+4. *RUNNBALE→RUNNING*：当一个进程通过`scheduler() `CPU调度获得CPU时间片，则进程进入RUNNING态开始执行进程程序段。
 
 5. *RUNNING→SLEEPING*：当一个进程程序段执行过程中需要等待某资源或等待某一事件发生时，应当让出CPU资源，从而进入SLEEPING状态，等待事件的发生/资源的获得。
 
@@ -444,7 +443,7 @@ fork(void)
 
 ### `swtch()`实现方式
 
-在VX6中，通过`swtch()`函数来实现进程之间的切换。在该操作系统中，进程切换的过程实际上可分为以下几步
+在XV6中，通过`swtch()`函数来实现进程之间的切换。在该操作系统中，进程切换的过程实际上可分为以下几步
 
 * 将当前`CPU`执行进程的寄存器的内容`%eip,%epb,%ebx,%esi,%edi`保存在栈上
 * 创建一个新的`struct context`进程上下文结构体，保存当前进程寄存器的值(实际上就是刚刚压入栈中的五个寄存器)
@@ -454,7 +453,7 @@ fork(void)
 
 至此，通过上述几步，完成进程的切换。
 
-在VX6的源代码中，swtch()函数是通过汇编代码的形式给出的，源码位于swtch.S文件中。
+在XV6的源代码中，swtch()函数是通过汇编代码的形式给出的，源码位于swtch.S文件中。
 
 
 
