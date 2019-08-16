@@ -36,6 +36,7 @@ idtinit(void)
 void
 trap(struct trapframe *tf)
 {
+  // 如果为中断类型为系统调用的话，调用相关系统调用
   if(tf->trapno == T_SYSCALL){
     if(myproc()->killed)
       exit();
@@ -46,16 +47,22 @@ trap(struct trapframe *tf)
     return;
   }
 
+  
   switch(tf->trapno){
+  // 触发计时器中断
   case T_IRQ0 + IRQ_TIMER:
     if(cpuid() == 0){
       acquire(&tickslock);
+      // 计时器+1
       ticks++;
+      // 唤醒相应进程
       wakeup(&ticks);
       release(&tickslock);
     }
+    // 表示中断已接收
     lapiceoi();
     break;
+  // 触发主从硬盘中断
   case T_IRQ0 + IRQ_IDE:
     ideintr();
     lapiceoi();
@@ -63,14 +70,17 @@ trap(struct trapframe *tf)
   case T_IRQ0 + IRQ_IDE+1:
     // Bochs generates spurious IDE1 interrupts.
     break;
+  // 触发键盘中断
   case T_IRQ0 + IRQ_KBD:
     kbdintr();
     lapiceoi();
     break;
+  // 触发串口设备中断
   case T_IRQ0 + IRQ_COM1:
     uartintr();
     lapiceoi();
     break;
+
   case T_IRQ0 + 7:
   case T_IRQ0 + IRQ_SPURIOUS:
     cprintf("cpu%d: spurious interrupt at %x:%x\n",
@@ -79,6 +89,8 @@ trap(struct trapframe *tf)
     break;
 
   //PAGEBREAK: 13
+  // 剩余中断则默认为异常触发的
+  // 打印出异常信息完成异常处理，结束进程
   default:
     if(myproc() == 0 || (tf->cs&3) == 0){
       // In kernel, it must be our mistake.
@@ -97,11 +109,13 @@ trap(struct trapframe *tf)
   // Force process exit if it has been killed and is in user space.
   // (If it is still executing in the kernel, let it keep running
   // until it gets to the regular system call return.)
+  // 若进程状态为killed且处于用户态，结束进程
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
 
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
+  // 当中断为计时器中断时，进行调度
   if(myproc() && myproc()->state == RUNNING &&
      tf->trapno == T_IRQ0+IRQ_TIMER)
     yield();
