@@ -133,9 +133,11 @@ syscall(void)
 {
   int num;
   struct proc *curproc = myproc();
-
+  // 获取系统调用编号
   num = curproc->tf->eax;
+  // 判断系统调用编号是否合法
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
+    // 执行相应的系统调用
     curproc->tf->eax = syscalls[num]();
   } else {
     cprintf("%d %s: unknown sys call %d\n",
