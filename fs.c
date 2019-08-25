@@ -192,6 +192,7 @@ static struct inode* iget(uint dev, uint inum);
 // Allocate an inode on device dev.
 // Mark it as allocated by  giving it type type.
 // Returns an unlocked but allocated and referenced inode.
+// 在磁盘上分配一个inode
 struct inode*
 ialloc(uint dev, short type)
 {
@@ -239,6 +240,7 @@ iupdate(struct inode *ip)
 // Find the inode with number inum on device dev
 // and return the in-memory copy. Does not lock
 // the inode and does not read it from disk.
+// 把磁盘中的inode信息移动到内存中，并提交给icache
 static struct inode*
 iget(uint dev, uint inum)
 {
@@ -274,6 +276,7 @@ iget(uint dev, uint inum)
 
 // Increment reference count for ip.
 // Returns ip to enable ip = idup(ip1) idiom.
+// 这里的复制是浅拷贝，只增加refer的次数，内存中不进行真实复制
 struct inode*
 idup(struct inode *ip)
 {
@@ -285,6 +288,7 @@ idup(struct inode *ip)
 
 // Lock the given inode.
 // Reads the inode from disk if necessary.
+// 获得对一个inode的控制权。如果inode还没有进入内存，则把inode写入内存
 void
 ilock(struct inode *ip)
 {
@@ -329,6 +333,7 @@ iunlock(struct inode *ip)
 // to it, free the inode (and its content) on disk.
 // All calls to iput() must be inside a transaction in
 // case it has to free the inode.
+// 从内存中去掉一个inode
 void
 iput(struct inode *ip)
 {
@@ -522,6 +527,7 @@ namecmp(const char *s, const char *t)
 
 // Look for a directory entry in a directory.
 // If found, set *poff to byte offset of entry.
+// 在一个目录中寻找目录项
 struct inode*
 dirlookup(struct inode *dp, char *name, uint *poff)
 {
@@ -549,6 +555,7 @@ dirlookup(struct inode *dp, char *name, uint *poff)
 }
 
 // Write a new directory entry (name, inum) into the directory dp.
+// 在目录中 写一个新的目录项
 int
 dirlink(struct inode *dp, char *name, uint inum)
 {

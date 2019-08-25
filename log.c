@@ -31,8 +31,9 @@
 
 // Contents of the header block, used for both the on-disk header block
 // and to keep track in memory of logged block# before commit.
+// logheader相当于内存中block和磁盘的中转站。由log来保护这个中转是安全的
 struct logheader {
-  int n;
+  int n;                                // 有效block的个数
   int block[LOGSIZE];
 };
 
@@ -46,6 +47,7 @@ struct log {
   struct logheader lh;
 };
 struct log log;
+//一个操作系统 只有一个log类型的文件，名字即是log
 
 static void recover_from_log(void);
 static void commit();
@@ -56,24 +58,27 @@ initlog(int dev)
   if (sizeof(struct logheader) >= BSIZE)
     panic("initlog: too big logheader");
 
+  // 这里申请一个superblock，是为了获取superblock中start, size等信息
+  // 参考fs.h，我们知道一共本操作系统中有4种block，分别是superblock, logblock, datablock, mapblock
   struct superblock sb;
   initlock(&log.lock, "log");
   readsb(dev, &sb);
-  log.start = sb.logstart;
+  log.start = sb.logstart;              // 注意这里的start指的是磁盘地址
   log.size = sb.nlog;
   log.dev = dev;
   recover_from_log();
 }
 
 // Copy committed blocks from log to their home location
+// 把log block的信息，提取到log结构体中
 static void
 install_trans(void)
 {
   int tail;
 
   for (tail = 0; tail < log.lh.n; tail++) {
-    struct buf *lbuf = bread(log.dev, log.start+tail+1); // read log block
-    struct buf *dbuf = bread(log.dev, log.lh.block[tail]); // read dst
+    struct buf *lbuf = bread(log.dev, log.start+tail+1); // read log block起点，是superblock指向的log位置
+    struct buf *dbuf = bread(log.dev, log.lh.block[tail]); // read dst终点，取lh第tail个block的地址
     memmove(dbuf->data, lbuf->data, BSIZE);  // copy block to dst
     bwrite(dbuf);  // write dst to disk
     brelse(lbuf);
@@ -82,6 +87,7 @@ install_trans(void)
 }
 
 // Read the log header from disk into the in-memory log header
+// 把磁盘中的数据读入logheader中
 static void
 read_head(void)
 {
@@ -98,6 +104,7 @@ read_head(void)
 // Write in-memory log header to disk.
 // This is the true point at which the
 // current transaction commits.
+// 在把block通过logheader写入磁盘的过程中，这个函数真正在执行写操作
 static void
 write_head(void)
 {
@@ -122,6 +129,7 @@ recover_from_log(void)
 }
 
 // called at the start of each FS system call.
+// 开始对log进行读写操作，锁住log
 void
 begin_op(void)
 {
@@ -142,6 +150,7 @@ begin_op(void)
 
 // called at the end of each FS system call.
 // commits if this was the last outstanding operation.
+// log读写结束，解除锁定
 void
 end_op(void)
 {
