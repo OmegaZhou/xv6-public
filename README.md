@@ -585,7 +585,7 @@ xchg(volatile uint *addr, uint newval)
 
 #### EFLAGS寄存器
 
-![eflag](img/eflag.jpg)
+![eflag](comment/img/eflag.jpg)
 
 
 
@@ -754,7 +754,7 @@ xchg(volatile uint *addr, uint newval)
 
   - x86硬件寻址方式
 
-    ![](img/page-hardware.png)
+    ![](comment/img/page-hardware.png)
 
     如图，对于一个32位的虚拟地址
 
@@ -763,7 +763,7 @@ xchg(volatile uint *addr, uint newval)
     3. 最后根据虚拟地址低12位的偏移量确定具体内存地址
 
 - 页表项格式
-  ![page_table_format](img/page-table-format.PNG)
+  ![page_table_format](comment/img/page-table-format.PNG)
   如图为各种情况下页表项的格式
 
 #### xv6内存映射模型
@@ -1580,7 +1580,7 @@ enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 
 
-![XV6进程状态转换示意图](img/transfer_prostate.jpg)
+![XV6进程状态转换示意图](comment/img/transfer_prostate.jpg)
 
 <center><b>进程状态转换示意图</b></center>
 **状态转换情况**
@@ -1898,7 +1898,7 @@ p->state = RUNNABLE;  //将进程状态置RUNNABLE
 
 ***第一个进程的内核栈示意图如下：***
 
-![first_proc_kernel](img/new_kernel.png)
+![first_proc_kernel](comment/img/new_kernel.png)
 
 `XV6 OS`可以运行于多处理机环境(上限为8个`CPU`)，每一个处理机都需要完成上述相应的初始化，最后调用`scheduler()`开始进程的调度，`scheduler()`作为当前`CPU`的内核调度器线程，循环从`ptable`中寻找已就绪的进程运行在当前`CPU`上。具体的调度方式参见下文的***进程调度***篇章。
 
@@ -2090,7 +2090,7 @@ swtch: #寄存器参数赋值
 
 2. 汇编代码分析
 
-![stack_before](img/stack_before.png)
+![stack_before](comment/img/stack_before.png)
 
 `%eax`寄存器所存储的是原进程的上下文堆栈地址，`%edx`寄存器所存储的是切换后进程的上下文堆栈地址，因此调用`swtch()`函数以后，首先需要给`%edx、%eax`寄存器赋值
 
@@ -2112,7 +2112,7 @@ swtch: #寄存器参数赋值
   pushl %edi #保存目标索引寄存器，压入栈中
 ```
 
-![stack_before](img/stack_after.png)
+![stack_before](comment/img/stack_after.png)
 
 完成上下文环境寄存器的保存以后，堆栈情况如图。最后五个寄存器正好构成了原进程的`context`，`%esp`即指向原进程的上下文堆栈地址。
 
@@ -2180,7 +2180,7 @@ swtch: #寄存器参数赋值
 
 `XV6 OS`不会直接从一个进程的上下文切换到另一个进程的上下文，而是通过一个中间的内核线程实现的:内核调度器线程，其中调用`swtch(struct context **old, struct context *new)`完成上下文切换。具体如图：
 
-![schedule_process](img/kernel_swtch.png)
+![schedule_process](comment/img/kernel_swtch.png)
 
 `XV6 OS`中，在`main.c`中经过一系列初始化之后，内核会进入`scheduler`中，开始第一次进程调度。首先内核会允许中断，然后加锁，在循环体中找到一个就绪状态的进程。然后调用`switchuvm()`切换到该进程的页表。然后使用`swtch()`切换到该进程中运行，该函数会按照`struct proc`中保存的上下文去切换上下文。然后再切回内核的页表最后再释放锁。
 
@@ -3088,7 +3088,7 @@ x86提供了INT n指令来直接产生一个中断以便用户程序从用户态
 
 **门描述符格式**
 
-![](img/idt.png)
+![](comment/img/idt.png)
 
 ##### IRQ号映射到中断向量
 
@@ -3116,7 +3116,7 @@ ioapicwrite(REG_TABLE+2*irq, T_IRQ0 + irq);
 - 清除 %eflags 的一些位。
 - 设置 %cs 和 %eip 为描述符中的值。
 
-![](img/int_stack.png)
+![](comment/img/int_stack.png)
 
 
 
