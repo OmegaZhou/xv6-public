@@ -57,6 +57,7 @@ uartputc(int c)
     return;
   for(i = 0; i < 128 && !(inb(COM1+5) & 0x20); i++)
     microdelay(10);
+  // 使用串口完成打印
   outb(COM1+0, c);
 }
 

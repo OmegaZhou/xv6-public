@@ -38,6 +38,8 @@ printint(int xx, int base, int sign)
     x = xx;
 
   i = 0;
+
+  // 进制转换
   do{
     buf[i++] = digits[x % base];
   }while((x /= base) != 0);
@@ -45,12 +47,14 @@ printint(int xx, int base, int sign)
   if(sign)
     buf[i++] = '-';
 
+  // 打印转换后的字符串
   while(--i >= 0)
     consputc(buf[i]);
 }
 //PAGEBREAK: 50
 
 // Print to the console. only understands %d, %x, %p, %s.
+// 格式化输出
 void
 cprintf(char *fmt, ...)
 {
@@ -103,6 +107,7 @@ cprintf(char *fmt, ...)
     release(&cons.lock);
 }
 
+// 异常输出
 void
 panic(char *s)
 {
@@ -128,6 +133,7 @@ panic(char *s)
 #define CRTPORT 0x3d4
 static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 
+// 移动光标
 static void
 cgaputc(int c)
 {
@@ -138,9 +144,10 @@ cgaputc(int c)
   pos = inb(CRTPORT+1) << 8;
   outb(CRTPORT, 15);
   pos |= inb(CRTPORT+1);
-
+  // 换行
   if(c == '\n')
     pos += 80 - pos%80;
+  // 回退
   else if(c == BACKSPACE){
     if(pos > 0) --pos;
   } else
@@ -148,7 +155,7 @@ cgaputc(int c)
 
   if(pos < 0 || pos > 25*80)
     panic("pos under/overflow");
-
+  // 滚屏
   if((pos/80) >= 24){  // Scroll up.
     memmove(crt, crt+80, sizeof(crt[0])*23*80);
     pos -= 80;
@@ -162,6 +169,7 @@ cgaputc(int c)
   crt[pos] = ' ' | 0x0700;
 }
 
+// 调用uartputc在屏幕显示字符，并移动光标
 void
 consputc(int c)
 {
@@ -188,6 +196,7 @@ struct {
 
 #define C(x)  ((x)-'@')  // Control-x
 
+// 通过给定的API读取键盘输入
 void
 consoleintr(int (*getc)(void))
 {
@@ -196,10 +205,12 @@ consoleintr(int (*getc)(void))
   acquire(&cons.lock);
   while((c = getc()) >= 0){
     switch(c){
+    // CTRL+P
     case C('P'):  // Process listing.
       // procdump() locks cons.lock indirectly; invoke later
       doprocdump = 1;
       break;
+    // CTRL+P
     case C('U'):  // Kill line.
       while(input.e != input.w &&
             input.buf[(input.e-1) % INPUT_BUF] != '\n'){
@@ -207,6 +218,7 @@ consoleintr(int (*getc)(void))
         consputc(BACKSPACE);
       }
       break;
+    // CTRL+P
     case C('H'): case '\x7f':  // Backspace
       if(input.e != input.w){
         input.e--;
