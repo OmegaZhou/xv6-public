@@ -34,6 +34,10 @@ struct {
   // head.next is most recently used.
   struct buf head;
 } bcache;
+// 一个操作系统只有一个cache
+// 对cache设置锁，表明对cache的访问也是排他的。
+// 注意，buffer中的prev和next串起来的双向链表，只的是被引用的buffer
+// 如果一个buffer不再被引用，它将被移出双向链表。但在申请的时候，是遍历整个cache的
 
 void
 binit(void)
@@ -41,7 +45,6 @@ binit(void)
   struct buf *b;
 
   initlock(&bcache.lock, "bcache");
-
 //PAGEBREAK!
   // Create linked list of buffers
   bcache.head.prev = &bcache.head;
@@ -50,10 +53,12 @@ binit(void)
     b->next = bcache.head.next;
     b->prev = &bcache.head;
     initsleeplock(&b->lock, "buffer");
+    // buffer采用的都是休眠锁，可以参考buf.h
     bcache.head.next->prev = b;
     bcache.head.next = b;
   }
 }
+
 
 // Look through buffer cache for block on device dev.
 // If not found, allocate a buffer.
@@ -63,21 +68,24 @@ bget(uint dev, uint blockno)
 {
   struct buf *b;
 
-  acquire(&bcache.lock);
+  acquire(&bcache.lock); 
+  // 代表了现在的cache已经被占用。
+  // 在此期间，其他所有对cache的请求都讲无法执行。
 
   // Is the block already cached?
   for(b = bcache.head.next; b != &bcache.head; b = b->next){
     if(b->dev == dev && b->blockno == blockno){
       b->refcnt++;
-      release(&bcache.lock);
-      acquiresleep(&b->lock);
-      return b;
+      release(&bcache.lock);              // 解锁cache
+      acquiresleep(&b->lock);             // 但还要锁住找到的buffer
+      return b;       // 在目前的cache中已经找到了目标buffer，并返回
     }
   }
 
   // Not cached; recycle an unused buffer.
   // Even if refcnt==0, B_DIRTY indicates a buffer is in use
   // because log.c has modified it but not yet committed it.
+  // 执行到这里，函数已经遍历了一遍buffer，没有找到
   for(b = bcache.head.prev; b != &bcache.head; b = b->prev){
     if(b->refcnt == 0 && (b->flags & B_DIRTY) == 0) {
       b->dev = dev;
@@ -86,13 +94,14 @@ bget(uint dev, uint blockno)
       b->refcnt = 1;
       release(&bcache.lock);
       acquiresleep(&b->lock);
-      return b;
+      return b;                         // 找到一个没有用的buffer。替代原有废置的buffer并返回
     }
   }
-  panic("bget: no buffers");
+  panic("bget: no buffers");            // 没有可以用的buffer，panic报错
 }
 
 // Return a locked buf with the contents of the indicated block.
+// 读一个已经存在于cache中的buffer
 struct buf*
 bread(uint dev, uint blockno)
 {
@@ -106,6 +115,7 @@ bread(uint dev, uint blockno)
 }
 
 // Write b's contents to disk.  Must be locked.
+// 把一个buffer的内容写回磁盘
 void
 bwrite(struct buf *b)
 {
@@ -117,6 +127,7 @@ bwrite(struct buf *b)
 
 // Release a locked buffer.
 // Move to the head of the MRU list.
+// 释放一个buffer的使用
 void
 brelse(struct buf *b)
 {
