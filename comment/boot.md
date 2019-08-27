@@ -1,6 +1,6 @@
 # Boot
 
-## 分析的文件
+## 涉及文件
 
 * bootasm.S
 * bootmain.c
